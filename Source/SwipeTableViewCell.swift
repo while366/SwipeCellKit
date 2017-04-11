@@ -107,14 +107,6 @@ open class SwipeTableViewCell: UICollectionViewCell, UIGestureRecognizerDelegate
     }
     
     /// :nodoc:
-    open override func willMove(toWindow newWindow: UIWindow?) {
-        super.willMove(toWindow: newWindow)
-        
-        if newWindow == nil {
-            reset()
-        }
-    }
-    
     func handlePan(gesture: UIPanGestureRecognizer) {
 
         guard let target = gesture.view else { return }
