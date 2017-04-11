@@ -7,7 +7,7 @@
 
 import UIKit
 
-extension UITableView {
+extension UICollectionView {
     var swipeCells: [SwipeTableViewCell] {
         return visibleCells as? [SwipeTableViewCell] ?? []
     }

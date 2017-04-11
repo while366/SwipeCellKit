@@ -22,7 +22,7 @@ public protocol SwipeTableViewCellDelegate: class {
      
      - returns: An array of `SwipeAction` objects representing the actions for the row. Each action you provide is used to create a button that the user can tap.  Returning `nil` will prevent swiping for the supplied orientation.
      */
-    func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> [SwipeAction]?
+    func collectionView(_ collectionView: UICollectionView, editActionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> [SwipeAction]?
     
     /**
      Asks the delegate for the display options to be used while presenting the action buttons.
@@ -37,7 +37,7 @@ public protocol SwipeTableViewCellDelegate: class {
      
      - note: If not implemented, a default `SwipeTableOptions` instance is used.
      */
-    func tableView(_ tableView: UITableView, editActionsOptionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> SwipeTableOptions
+    func collectionView(_ collectionView: UICollectionView, editActionsOptionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> SwipeTableOptions
     
     /**
      Tells the delegate that the table view is about to go into editing mode.
@@ -48,7 +48,7 @@ public protocol SwipeTableViewCellDelegate: class {
      
      - parameter orientation: The side of the cell.
     */
-    func tableView(_ tableView: UITableView, willBeginEditingRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation)
+    func collectionView(_ collectionView: UICollectionView, willBeginEditingRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation)
 
     /**
      Tells the delegate that the table view has left editing mode.
@@ -59,18 +59,18 @@ public protocol SwipeTableViewCellDelegate: class {
      
      - parameter orientation: The side of the cell.
      */
-    func tableView(_ tableView: UITableView, didEndEditingRowAt indexPath: IndexPath?, for orientation: SwipeActionsOrientation)
+    func collectionView(_ collectionView: UICollectionView, didEndEditingRowAt indexPath: IndexPath?, for orientation: SwipeActionsOrientation)
 }
 
 /**
  Default implementation of `SwipeTableViewCellDelegate` methods
  */
 public extension SwipeTableViewCellDelegate {
-    func tableView(_ tableView: UITableView, editActionsOptionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> SwipeTableOptions {
+    func collectionView(_ collectionView: UICollectionView, editActionsOptionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> SwipeTableOptions {
         return SwipeTableOptions()
     }
     
-    func tableView(_ tableView: UITableView, willBeginEditingRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) {}
+    func collectionView(_ collectionView: UICollectionView, willBeginEditingRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) {}
     
-    func tableView(_ tableView: UITableView, didEndEditingRowAt indexPath: IndexPath?, for orientation: SwipeActionsOrientation) {}
+    func collectionView(_ collectionView: UICollectionView, didEndEditingRowAt indexPath: IndexPath?, for orientation: SwipeActionsOrientation) {}
 }

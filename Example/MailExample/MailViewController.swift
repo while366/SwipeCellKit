@@ -8,7 +8,10 @@
 import UIKit
 import SwipeCellKit
 
-class MailViewController: UITableViewController {
+private let kCellReuseIdentifier = "MailCollectionCell"
+
+class MailViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
+    
     var emails: [Email] = []
     
     var defaultOptions = SwipeTableOptions()
@@ -16,14 +19,46 @@ class MailViewController: UITableViewController {
     var buttonDisplayMode: ButtonDisplayMode = .titleAndImage
     var buttonStyle: ButtonStyle = .backgroundColor
     
+    private let collectionView: UICollectionView
+
+    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
+        
+        let layout = UICollectionViewFlowLayout()
+        
+        collectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: layout)
+        collectionView.allowsSelection = true
+        collectionView.allowsMultipleSelection = true
+        collectionView.translatesAutoresizingMaskIntoConstraints = false
+        collectionView.backgroundColor = .white
+        collectionView.register(MailCell.self, forCellWithReuseIdentifier: kCellReuseIdentifier)
+        
+        
+        super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
+        
+        collectionView.delegate = self
+        collectionView.dataSource = self
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    
     // MARK: - Lifecycle
     
     override func viewDidLoad() {
-        tableView.allowsSelection = true
-        tableView.allowsMultipleSelectionDuringEditing = true
         
-        tableView.rowHeight = UITableViewAutomaticDimension
-        tableView.estimatedRowHeight = 100
+        view.addSubview(collectionView)
+        
+        let views = ["collectionView" : collectionView]
+        let constraints = [
+            "H:|[collectionView]|",
+            "V:|[collectionView]|"
+            ].flatMap {
+                NSLayoutConstraint.constraints(withVisualFormat: $0, options: [], metrics: nil, views: views)
+        }
+        
+        NSLayoutConstraint.activate(constraints)
         
         navigationItem.rightBarButtonItem = editButtonItem
         
@@ -32,14 +67,21 @@ class MailViewController: UITableViewController {
         resetData()
     }
     
-    // MARK: - Table view data source
+    // MARK: - Collection view data source
     
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    func numberOfSections(in collectionView: UICollectionView) -> Int {
+        
+        return 1
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        
         return emails.count
     }
     
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "MailCell") as! MailCell
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: kCellReuseIdentifier, for: indexPath) as! MailCell
         cell.delegate = self
         cell.selectedBackgroundView = createSelectedBackgroundView()
         
@@ -52,6 +94,15 @@ class MailViewController: UITableViewController {
         
         return cell
     }
+    
+    
+    // MARK: - Collection view layout delegate
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        
+        return CGSize(width: collectionView.frame.width, height: 100)
+    }
+    
     
     // MARK: - Actions
     
@@ -103,12 +154,12 @@ class MailViewController: UITableViewController {
     func resetData() {
         emails = mockEmails
         emails.forEach { $0.unread = false }
-        tableView.reloadData()
+        collectionView.reloadData()
     }
 }
 
 extension MailViewController: SwipeTableViewCellDelegate {
-    func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> [SwipeAction]? {
+    func collectionView(_ collectionView: UICollectionView, editActionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> [SwipeAction]? {
         let email = emails[indexPath.row]
 
         if orientation == .left {
@@ -118,7 +169,7 @@ extension MailViewController: SwipeTableViewCellDelegate {
                 let updatedStatus = !email.unread
                 email.unread = updatedStatus
 
-                let cell = tableView.cellForRow(at: indexPath) as! MailCell
+                let cell = collectionView.cellForItem(at: indexPath) as! MailCell
                 cell.setUnread(updatedStatus, animated: true)
             }
             
@@ -139,7 +190,7 @@ extension MailViewController: SwipeTableViewCellDelegate {
             }
             configure(action: delete, with: .trash)
             
-            let cell = tableView.cellForRow(at: indexPath) as! MailCell
+            let cell = collectionView.cellForItem(at: indexPath) as! MailCell
             let closure: (UIAlertAction) -> Void = { _ in cell.hideSwipe(animated: true) }
             let more = SwipeAction(style: .default, title: nil) { action, indexPath in
                 let controller = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
@@ -157,7 +208,7 @@ extension MailViewController: SwipeTableViewCellDelegate {
         }
     }
     
-    func tableView(_ tableView: UITableView, editActionsOptionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> SwipeTableOptions {
+    func collectionView(_ collectionView: UICollectionView, editActionsOptionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> SwipeTableOptions {
         var options = SwipeTableOptions()
         options.expansionStyle = orientation == .left ? .selection : .destructive
         options.transitionStyle = defaultOptions.transitionStyle
@@ -190,19 +241,66 @@ extension MailViewController: SwipeTableViewCellDelegate {
 }
 
 class MailCell: SwipeTableViewCell {
-    @IBOutlet var fromLabel: UILabel!
-    @IBOutlet var dateLabel: UILabel!
-    @IBOutlet var subjectLabel: UILabel!
-    @IBOutlet var bodyLabel: UILabel!
+
+    let fromLabel = UILabel()
+    let dateLabel = UILabel()
+    let subjectLabel = UILabel()
+    let bodyLabel = UILabel()
     
     var animator: Any?
     
-    var indicatorView = IndicatorView(frame: .zero)
+    let indicatorView = IndicatorView(frame: .zero)
     
     var unread = false {
         didSet {
             indicatorView.transform = unread ? CGAffineTransform.identity : CGAffineTransform.init(scaleX: 0.001, y: 0.001)
         }
+    }
+    
+    override init(frame: CGRect) {
+
+        super.init(frame: frame)
+        
+        contentView.backgroundColor = .white
+
+        var views = [String: UIView]()
+        
+//        fromLabel.translatesAutoresizingMaskIntoConstraints = false
+//        views["fromLabel"] = fromLabel
+//        contentView.addSubview(fromLabel)
+        
+        
+//        dateLabel.translatesAutoresizingMaskIntoConstraints = false
+//        views["dateLabel"] = dateLabel
+//        contentView.addSubview(dateLabel)
+        
+        
+        subjectLabel.numberOfLines = 0
+        subjectLabel.translatesAutoresizingMaskIntoConstraints = false
+        subjectLabel.setContentHuggingPriority(UILayoutPriorityRequired, for: .vertical)
+        views["subjectLabel"] = subjectLabel
+        contentView.addSubview(subjectLabel)
+        
+        
+        bodyLabel.numberOfLines = 0
+        bodyLabel.translatesAutoresizingMaskIntoConstraints = false
+        views["bodyLabel"] = bodyLabel
+        contentView.addSubview(bodyLabel)
+
+        
+        let constraints = [
+            "H:|-[subjectLabel]-|",
+            "H:|-[bodyLabel]-|",
+            "V:|-[subjectLabel]-[bodyLabel]-|",
+            ].flatMap {
+                NSLayoutConstraint.constraints(withVisualFormat: $0, options: [], metrics: nil, views: views)
+        }
+        
+        NSLayoutConstraint.activate(constraints)
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
     
     override func awakeFromNib() {

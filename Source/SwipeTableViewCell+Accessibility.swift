@@ -40,12 +40,12 @@ extension SwipeTableViewCell {
     /// :nodoc:
     open override var accessibilityCustomActions: [UIAccessibilityCustomAction]? {
         get {
-            guard let tableView = tableView, let indexPath = tableView.indexPath(for: self) else {
+            guard let collectionView = collectionView, let indexPath = collectionView.indexPath(for: self) else {
                 return super.accessibilityCustomActions
             }
             
-            let leftActions = delegate?.tableView(tableView, editActionsForRowAt: indexPath, for: .left) ?? []
-            let rightActions = delegate?.tableView(tableView, editActionsForRowAt: indexPath, for: .right) ?? []
+            let leftActions = delegate?.collectionView(collectionView, editActionsForRowAt: indexPath, for: .left) ?? []
+            let rightActions = delegate?.collectionView(collectionView, editActionsForRowAt: indexPath, for: .right) ?? []
             
             let actions = [rightActions.first, leftActions.first].flatMap({ $0 }) + rightActions.dropFirst() + leftActions.dropFirst()
             
@@ -65,14 +65,14 @@ extension SwipeTableViewCell {
     }
     
     func performAccessibilityCustomAction(accessibilityCustomAction: SwipeAccessibilityCustomAction) -> Bool {
-        guard let tableView = tableView else { return false }
+        guard let collectionView = collectionView else { return false }
         
         let swipeAction = accessibilityCustomAction.action
         
         swipeAction.handler?(swipeAction, accessibilityCustomAction.indexPath)
         
         if swipeAction.style == .destructive {
-            tableView.deleteRows(at: [accessibilityCustomAction.indexPath], with: .fade)
+            collectionView.deleteItems(at: [accessibilityCustomAction.indexPath])
         }
         
         return true
