@@ -27,7 +27,6 @@ class MailViewController: UIViewController, UICollectionViewDataSource, UICollec
         
         collectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: layout)
         collectionView.allowsSelection = true
-        collectionView.allowsMultipleSelection = true
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         collectionView.backgroundColor = .white
         collectionView.register(MailCell.self, forCellWithReuseIdentifier: kCellReuseIdentifier)
@@ -187,6 +186,7 @@ extension MailViewController: SwipeTableViewCellDelegate {
             
             let delete = SwipeAction(style: .destructive, title: nil) { action, indexPath in
                 self.emails.remove(at: indexPath.row)
+                collectionView.deleteItems(at: [indexPath])
             }
             configure(action: delete, with: .trash)
             
@@ -336,6 +336,18 @@ class MailCell: SwipeTableViewCell {
             self.animator = localAnimator
         } else {
             closure()
+        }
+    }
+    
+    override var isHighlighted: Bool {
+        didSet {
+            contentView.backgroundColor = isHighlighted ? UIColor.lightGray : UIColor.white
+        }
+    }
+    
+    override var isSelected: Bool {
+        didSet {
+            contentView.backgroundColor = isSelected ? UIColor.lightGray : UIColor.white
         }
     }
 }

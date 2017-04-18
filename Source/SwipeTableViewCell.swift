@@ -36,6 +36,7 @@ open class SwipeTableViewCell: UICollectionViewCell, UIGestureRecognizerDelegate
     lazy var tapGestureRecognizer: UITapGestureRecognizer = {
         let gesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(gesture:)))
         gesture.delegate = self
+        gesture.isEnabled = false
         return gesture
     }()
     
@@ -261,8 +262,10 @@ open class SwipeTableViewCell: UICollectionViewCell, UIGestureRecognizerDelegate
             let indexPath = collectionView.indexPath(for: self) else { return }
 
         if active {
+            tapGestureRecognizer.isEnabled = true
             delegate?.collectionView(collectionView, willBeginEditingRowAt: indexPath, for: actionsView.orientation)
         } else {
+            tapGestureRecognizer.isEnabled = false
             delegate?.collectionView(collectionView, didEndEditingRowAt: indexPath, for: actionsView.orientation)
         }
     }
@@ -345,11 +348,15 @@ open class SwipeTableViewCell: UICollectionViewCell, UIGestureRecognizerDelegate
     }
     
     /// :nodoc:
-//    override open func setHighlighted(_ highlighted: Bool, animated: Bool) {
-//        if state == .center {
-//            super.setHighlighted(highlighted, animated: animated)
-//        }
-//    }
+    override open var isHighlighted: Bool {
+        get {
+            return super.isHighlighted
+        }
+        set {
+            guard state == .center || state == .dragging else { return }
+            super.isHighlighted = newValue
+        }
+    }
     
     /// :nodoc:
     override open var layoutMargins: UIEdgeInsets {
@@ -384,6 +391,7 @@ extension SwipeTableViewCell {
         state = .center
         
         collectionView?.setGestureEnabled(true)
+        tapGestureRecognizer.isEnabled = false
         
         actionsView?.removeFromSuperview()
         actionsView = nil
@@ -494,7 +502,7 @@ extension SwipeTableViewCell: SwipeActionsViewDelegate {
             case .delete:
                 self?.mask = actionsView.createDeletionMask()
                 
-                collectionView.deleteItems(at: [indexPath])
+//                collectionView.deleteItems(at: [indexPath])
                 
                 UIView.animate(withDuration: 0.3, animations: {
                     self?.center.x = newCenter
@@ -540,7 +548,7 @@ extension SwipeTableViewCell {
                 collectionView?.hideSwipeCell()
             }
 
-            if let cells = collectionView?.visibleCells as? [SwipeTableViewCell] {
+            if let cells = collectionView?.swipeCells {
                 let cell = cells.first(where: { $0.state.isActive })
                 return cell == nil ? false : true
             }
