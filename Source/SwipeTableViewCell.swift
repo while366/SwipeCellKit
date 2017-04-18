@@ -119,8 +119,6 @@ open class SwipeTableViewCell: UICollectionViewCell, UIGestureRecognizerDelegate
             originalCenter = center.x
             
             if state == .center || state == .animatingToCenter {
-                state = .dragging
-
                 let velocity = gesture.velocity(in: target)
                 let orientation: SwipeActionsOrientation = velocity.x > 0 ? .left : .right
 
@@ -157,7 +155,8 @@ open class SwipeTableViewCell: UICollectionViewCell, UIGestureRecognizerDelegate
                 } else {
                     target.center.x = gesture.elasticTranslation(in: target,
                                                                  withLimit: CGSize(width: targetOffset, height: 0),
-                                                                 fromOriginalCenter: CGPoint(x: originalCenter, y: 0)).x
+                                                                 fromOriginalCenter: CGPoint(x: originalCenter, y: 0),
+                                                                 applyingRatio: expansionStyle.targetOverscrollElasticity).x
                 }
                 
                 actionsView.setExpanded(expanded: expanded, feedback: true)
@@ -252,6 +251,8 @@ open class SwipeTableViewCell: UICollectionViewCell, UIGestureRecognizerDelegate
         }
         
         self.actionsView = actionsView
+
+        state = .dragging
         
         notifyEditingStateChange(active: true)
     }
@@ -395,61 +396,6 @@ extension SwipeTableViewCell {
         
         actionsView?.removeFromSuperview()
         actionsView = nil
-    }
-    
-    /**
-     Hides the swipe actions and returns the cell to center.
-     
-     - parameter animated: Specify `true` to animate the hiding of the swipe actions or `false` to hide it immediately.
-     */
-    public func hideSwipe(animated: Bool) {
-        guard state == .left || state == .right else { return }
-
-        state = .animatingToCenter
-        
-        collectionView?.setGestureEnabled(true)
-
-        let targetCenter = self.targetCenter(active: false)
-        
-        if animated {
-            animate(toOffset: targetCenter) { _ in
-                self.reset()
-            }
-        } else {
-            center = CGPoint(x: targetCenter, y: self.center.y)
-            reset()
-        }
-        
-        notifyEditingStateChange(active: false)
-    }
-    
-    /**
-     Shows the swipe actions for the specified orientation.
-
-     - parameter orientation: The side of the cell on which to show the swipe actions.
-
-     - parameter animated: Specify `true` to animate the showing of the swipe actions or `false` to show them immediately.
-     
-     - parameter completion: The closure to be executed once the animation has finished. A `Boolean` argument indicates whether or not the animations actually finished before the completion handler was called.
-    */
-    public func showSwipe(orientation: SwipeActionsOrientation, animated: Bool = true, completion: ((Bool) -> Void)? = nil) {
-        let targetState = SwipeState(orientation: orientation)
-        
-        guard state != targetState, showActionsView(for: orientation) else { return }
-        
-        collectionView?.hideSwipeCell()
-
-        state = targetState
-
-        let targetCenter = self.targetCenter(active: true)
-        
-        if animated {
-            animate(toOffset: targetCenter) { complete in
-                completion?(complete)
-            }
-        } else {
-            center.x = targetCenter
-        }
     }
 }
 
