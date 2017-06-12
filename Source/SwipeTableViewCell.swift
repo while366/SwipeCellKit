@@ -584,15 +584,14 @@ extension SwipeTableViewCell {
                 collectionView?.hideSwipeCell()
             }
 
-            if let cells = collectionView?.swipeCells {
-                let cell = cells.first(where: { $0.state.isActive })
-                return cell == nil ? false : true
-            }
+            let cell = collectionView?.swipeCells.first(where: { $0.state.isActive })
+            return cell == nil ? false : true
         }
         
         if gestureRecognizer == panGestureRecognizer,
             let view = gestureRecognizer.view,
-            let gestureRecognizer = gestureRecognizer as? UIPanGestureRecognizer {
+            let gestureRecognizer = gestureRecognizer as? UIPanGestureRecognizer
+        {
             let translation = gestureRecognizer.translation(in: view)
             return abs(translation.y) <= abs(translation.x)
         }
